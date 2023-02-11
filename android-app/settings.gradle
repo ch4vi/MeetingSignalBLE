@@ -1,0 +1,98 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+enableFeaturePreview('VERSION_CATALOGS')
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+    versionCatalogs {
+        libs {
+            version("hilt", "2.45")
+            version("room", "2.5.0-beta01")
+            version("compose", "1.3.3")
+
+            library("android-core", "androidx.core", "core-ktx").version("1.9.0")
+            library("hilt", "com.google.dagger", "hilt-android").versionRef("hilt")
+            library("timber", "com.jakewharton.timber", "timber").version("5.0.1")
+            bundle("common", ["android-core", "hilt", "timber"])
+
+//            region Debug
+            library("ui-compose-tools", "androidx.compose.ui", "ui-tooling").versionRef("compose")
+            library("ui-compose-manifest", "androidx.compose.ui", "ui-test-manifest").versionRef("compose")
+            bundle("debug", [
+                    "ui-compose",
+                    "ui-compose-tools",
+            ])
+//            endregion
+
+//            region UI
+            version("navigation", "2.5.3")
+            library("compose-ui", "androidx.compose.ui", "ui").versionRef("compose")
+            library("compose-ui-tools", "androidx.compose.ui", "ui-tooling-preview").versionRef("compose")
+            library("compose-material", "androidx.compose.material3", "material3").version("1.1.0-alpha06")
+            library("compose-activity", "androidx.activity", "activity-compose").version("1.6.1")
+            library("nav-fragment", "androidx.navigation", "navigation-fragment-ktx").versionRef("navigation")
+            library("nav-ui", "androidx.navigation", "navigation-ui-ktx").versionRef("navigation")
+            bundle("ui", [
+                    "nav-fragment",
+                    "nav-ui",
+                    "compose-ui",
+                    "compose-ui-tools",
+                    "compose-material",
+                    "compose-activity",
+            ])
+//            endregion
+
+//            region Kapt
+            library("room-kapt", "androidx.room", "room-compiler").versionRef("room")
+            library("hilt-kapt", "com.google.dagger", "hilt-compiler").versionRef("hilt")
+            library("hilt-test-kapt", "com.google.dagger", "hilt-android-compiler").versionRef("hilt")
+//            endregion
+
+//            region Data
+            library("logging", "com.squareup.okhttp3", "logging-interceptor").version("4.10.0")
+            library("room-ktx", "androidx.room", "room-ktx").versionRef("room")
+            library("room-runtime", "androidx.room", "room-runtime").versionRef("room")
+            bundle("data", [
+                    "logging",
+                    "room-ktx",
+                    "room-runtime",
+            ])
+//            endregion
+
+//            region Test
+            library("core-test", "androidx.arch.core", "core-testing").version("2.1.0")
+            library("junit", "junit", "junit").version("4.13.2")
+            library("mockk", "io.mockk", "mockk").version("1.13.4")
+            library("coroutines-test", "org.jetbrains.kotlinx", "kotlinx-coroutines-test").version("1.6.4")
+            bundle("test", [
+                    "core-test",
+                    "coroutines-test",
+                    "junit",
+                    "mockk",
+            ])
+
+            library("ui-junit", "androidx.test.ext", "junit-ktx").version("1.1.5")
+            library("ui-hilt", "com.google.dagger", "hilt-android-testing").versionRef("hilt")
+            library("espresso", "androidx.test.espresso", "espresso-core").version("3.3.0")
+            library("ui-compose", "androidx.compose.ui", "ui-test-junit4").versionRef("compose")
+            bundle("uitest", [
+                    "ui-junit",
+                    "ui-hilt",
+                    "espresso",
+                    "ui-compose",
+            ])
+//            endregion
+        }
+    }
+}
+
+rootProject.name = "MeetingSignalAndroid"
+include ':app'

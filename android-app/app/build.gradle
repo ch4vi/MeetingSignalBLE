@@ -1,0 +1,98 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jlleitschuh.gradle.ktlint'
+    id 'androidx.navigation.safeargs.kotlin'
+    id 'kotlin-parcelize'
+    id 'kotlin-kapt'
+    id 'com.google.dagger.hilt.android'
+}
+
+def appName = "Meeting Signal BLE"
+
+android {
+    namespace 'com.ch4vi.meetingsignal'
+    compileSdk rootProject.ext.sdk.compile
+
+    defaultConfig {
+        applicationId "com.ch4vi.meetingsignal"
+        minSdkVersion rootProject.ext.sdk.min
+        targetSdkVersion rootProject.ext.sdk.target
+        versionCode computeVersionCode()
+        versionName rootProject.ext.version_name
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            testCoverageEnabled true
+            debuggable true
+
+            resValue "string", "app_label", "[D] ${appName}"
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            resValue "string", "app_label", appName
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.4.2'
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+    lint {
+        lintConfig file('../config/lint.xml')
+    }
+}
+
+dependencies {
+
+    //implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
+    implementation libs.bundles.common
+    implementation libs.bundles.ui
+    implementation 'androidx.core:core-ktx:+'
+
+
+    kapt libs.room.kapt
+    kapt libs.hilt.kapt
+    implementation libs.bundles.data
+
+    testImplementation libs.bundles.test
+
+    kaptAndroidTest  libs.hilt.test.kapt
+    androidTestImplementation libs.bundles.uitest
+
+    debugImplementation libs.bundles.debug
+}
+kapt {
+    correctErrorTypes true
+}
+def computeVersionCode() {
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-list', '--count', 'HEAD'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim().toInteger()
+}
