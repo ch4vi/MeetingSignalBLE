@@ -36,6 +36,7 @@ dependencyResolutionManagement {
             version("navigation", "2.5.3")
             library("compose-ui", "androidx.compose.ui", "ui").versionRef("compose")
             library("compose-ui-tools", "androidx.compose.ui", "ui-tooling-preview").versionRef("compose")
+            library("compose-livedata", "androidx.compose.runtime","runtime-livedata").versionRef("compose")
             library("compose-material", "androidx.compose.material3", "material3").version("1.1.0-alpha06")
             library("compose-activity", "androidx.activity", "activity-compose").version("1.6.1")
             library("nav-fragment", "androidx.navigation", "navigation-fragment-ktx").versionRef("navigation")
@@ -47,6 +48,7 @@ dependencyResolutionManagement {
                     "compose-ui-tools",
                     "compose-material",
                     "compose-activity",
+                    "compose-livedata",
             ])
 //            endregion
 
