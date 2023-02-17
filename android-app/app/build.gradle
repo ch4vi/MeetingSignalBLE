@@ -51,10 +51,7 @@ android {
         jvmTarget = '1.8'
     }
     buildFeatures {
-        compose true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.4.2'
+        viewBinding true
     }
     packagingOptions {
         resources {
@@ -68,11 +65,9 @@ android {
 
 dependencies {
 
-    //implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
     implementation libs.bundles.common
     implementation libs.bundles.ui
     implementation 'androidx.core:core-ktx:+'
-
 
     kapt libs.room.kapt
     kapt libs.hilt.kapt
@@ -82,8 +77,6 @@ dependencies {
 
     kaptAndroidTest  libs.hilt.test.kapt
     androidTestImplementation libs.bundles.uitest
-
-    debugImplementation libs.bundles.debug
 }
 kapt {
     correctErrorTypes true

@@ -1,4 +1,4 @@
-package com.ch4vi.meetingsignal.stuff
+package com.ch4vi.meetingsignal.bluetooth
 
 
 import android.annotation.SuppressLint
@@ -15,10 +15,10 @@ import android.content.Intent
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import com.ch4vi.meetingsignal.stuff.BluetoothLEService.Action.GATT_CONNECTED
-import com.ch4vi.meetingsignal.stuff.BluetoothLEService.Action.GATT_DATA_AVAILABLE
-import com.ch4vi.meetingsignal.stuff.BluetoothLEService.Action.GATT_DISCONNECTED
-import com.ch4vi.meetingsignal.stuff.BluetoothLEService.Action.GATT_SERVICES_DISCOVERED
+import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService.Action.GATT_CONNECTED
+import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService.Action.GATT_DATA_AVAILABLE
+import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService.Action.GATT_DISCONNECTED
+import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService.Action.GATT_SERVICES_DISCOVERED
 import timber.log.Timber
 import java.util.UUID
 
@@ -113,7 +113,7 @@ class BluetoothLEService : Service() {
         }
     }
 
-    private inner class LocalBinder : Binder() {
+    inner class LocalBinder : Binder() {
         val service: BluetoothLEService
             get() = this@BluetoothLEService
     }
@@ -126,7 +126,7 @@ class BluetoothLEService : Service() {
         return super.onUnbind(intent)
     }
 
-    private fun initialize(): Boolean {
+    fun initialize(): Boolean {
         if (!BluetoothPermission.checkPermissions(applicationContext)) {
             Timber.e("Mandatory permissions not granted, run BluetoothScan first")
             return false
@@ -146,7 +146,7 @@ class BluetoothLEService : Service() {
         return true
     }
 
-    private fun connect(address: String): Boolean {
+    fun connect(address: String): Boolean {
         val adapter = bluetoothAdapter
         if (adapter == null) {
             Timber.e("BluetoothAdapter not initialized")
@@ -191,9 +191,10 @@ class BluetoothLEService : Service() {
 
         for (gattService in gattServices) {
             val gattCharacteristics = gattService.characteristics
+            Timber.d(" XXX Service ${gattService.uuid}")
             for (gattCharacteristic in gattCharacteristics) {
                 val uuid = gattCharacteristic.uuid.toString()
-                Timber.i("uuid : $uuid")
+                Timber.i("XXX Characteristic uuid : $uuid")
                 if (uuid.equals(uuidNotify.toString(), ignoreCase = true)) {
                     notifyCharacteristic = gattCharacteristic
                     gatt.setCharacteristicNotification(gattCharacteristic, true)

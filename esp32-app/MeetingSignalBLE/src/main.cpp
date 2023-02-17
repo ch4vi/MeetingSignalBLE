@@ -14,6 +14,11 @@ uint8_t value = 0;
 // https://www.uuidgenerator.net/
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define CHARACTERISTIC_UUID2 "00002a19-0000-1000-8000-00805f9b34fb"
+
+float batt;
+BLECharacteristic batteryLevelCharacterisitic(CHARACTERISTIC_UUID2, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE);
+BLEDescriptor batteryLevelDescriptor(BLEUUID((uint16_t)0x2902));
 
 // LED Pins
 const uint8_t LED_WARM = 13; // 13 corresponds to GPIO13
@@ -134,11 +139,21 @@ void setup()
   // Create a BLE Descriptor
   pCharacteristic->addDescriptor(new BLE2902());
 
+  // Battery level characteristic
+  pService->addCharacteristic(&batteryLevelCharacterisitic);
+  batteryLevelDescriptor.setValue("BME temperature Celsius");
+  batteryLevelCharacterisitic.addDescriptor(&batteryLevelDescriptor);
+
   // Start the service
   pService->start();
 
   // Start advertising
-  pServer->getAdvertising()->start();
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
+  pAdvertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
+  pAdvertising->setMinPreferred(0x12);
+  BLEDevice::startAdvertising();
   Serial.println("Waiting a client connection to notify...");
 }
 
@@ -147,10 +162,23 @@ void loop()
   // notify changed value
   if (deviceConnected)
   {
-    Serial.println("send bluetooth..");
+    Serial.print("send bluetooth...");
+    Serial.println();
+
     String s = "notification string";
     pCharacteristic->setValue(s.c_str());
     pCharacteristic->notify();
+
+    delay(2000);
+
+    batt = 100;
+    static char battByte[6];
+    dtostrf(batt, 6, 2, battByte);
+    Serial.print(batt);
+
+    batteryLevelCharacterisitic.setValue(battByte);
+    batteryLevelCharacterisitic.notify();
+
     value++;
     delay(2000); // bluetooth stack will go into congestion, if too many packets are sent
   }
@@ -158,8 +186,8 @@ void loop()
   // disconnecting
   if (!deviceConnected && oldDeviceConnected)
   {
-    delay(500);                  // give the bluetooth stack the chance to get things ready
-    pServer->startAdvertising(); // restart advertising
+    delay(500);                    // give the bluetooth stack the chance to get things ready
+    BLEDevice::startAdvertising(); // restart advertising
     Serial.println("start advertising");
     oldDeviceConnected = deviceConnected;
     disconnectedAlert();
