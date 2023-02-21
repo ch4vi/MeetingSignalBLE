@@ -6,6 +6,7 @@ Bluetooth
 https://randomnerdtutorials.com/esp32-bluetooth-low-energy-ble-arduino-ide/
 https://github.com/kakopappa/bluetooth_android_esp32_example
 https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/Assigned%20Numbers.pdf
+https://punchthrough.com/android-ble-guide/ (<--- https://github.com/PunchThrough/ble-starter-android )
 
 Battery
 https://iotprojectsideas.com/esp8266-monitor-its-own-battery-level-using-iot/

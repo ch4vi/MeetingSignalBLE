@@ -8,5 +8,9 @@
 			"path": "MeetingSignalBLE"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"new": "cpp"
+		}
+	}
 }
