@@ -1,6 +1,8 @@
 # MeetingSignalBLE
 Android app to control "On Air" style banner
 
+[![CI](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/github.yml/badge.svg)](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/github.yml)
+
 Reference links:
 Bluetooth
 https://randomnerdtutorials.com/esp32-bluetooth-low-energy-ble-arduino-ide/
