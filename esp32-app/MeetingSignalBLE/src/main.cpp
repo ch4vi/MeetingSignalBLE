@@ -42,8 +42,8 @@ const uint8_t ANALOG_BATT = 36; // 13 corresponds to GPIO36 ADC1_CH0
 #define INPUT_BATT ANALOG_BATT
 float batt_calibration = 0.52; // Check Battery voltage using multimeter (multimeterRead - float_voltage) check getBatteryLevel()
 
-/* 
- * LED control functions 
+/*
+ * LED control functions
  */
 
 void waitingStatusAlert()
@@ -112,8 +112,8 @@ void changeLedState(String state)
   led_currentState = state;
 }
 
-/* 
- * BATTERY control functions 
+/*
+ * BATTERY control functions
  */
 
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
@@ -121,14 +121,15 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-int getBatteryLevel(int analogValue) {
-  
+int getBatteryLevel(int analogValue)
+{
+
   // divide by 4095 because analog read range in ESP32 is up to 4095
   // multiply by two as voltage divider network is 100K & 100K Resistor
-  float voltage = (((analogValue * 3.3) / 4095) * 2 + batt_calibration); 
+  float voltage = (((analogValue * 3.3) / 4095) * 2 + batt_calibration);
 
   // 2.8V as Battery Cut off Voltage & 4.2V as Maximum Voltage
-  int bat_percentage = mapfloat(voltage, 2.8, 4.2, 0, 100); 
+  int bat_percentage = mapfloat(voltage, 2.8, 4.2, 0, 100);
 
   if (bat_percentage >= 100)
   {
@@ -151,7 +152,7 @@ int getBatteryLevel(int analogValue) {
   return bat_percentage;
 }
 
-/* 
+/*
  * BLUETOOTH Callbacks
  */
 
@@ -195,13 +196,15 @@ class MyCallbacks : public BLECharacteristicCallbacks
   }
 };
 
-/* 
- * MAIN 
+/*
+ * MAIN
  */
 
 void setup()
 {
+#if defined(DEBUG)
   Serial.begin(115200);
+#endif
 
   // Setup led control
   pinMode(LED_COLD, OUTPUT);
