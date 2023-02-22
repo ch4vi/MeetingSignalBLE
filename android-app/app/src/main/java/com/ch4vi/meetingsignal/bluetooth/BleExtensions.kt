@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.ch4vi.meetingsignal.bluetooth
 
 import android.annotation.SuppressLint
@@ -13,7 +15,6 @@ import java.util.Locale
 import java.util.UUID
 
 // region BluetoothGatt
-
 fun BluetoothGatt.printGattTable() {
     if (services.isEmpty()) {
         Timber.i("No service and characteristic available, call discoverServices() first?")
@@ -142,6 +143,7 @@ fun BluetoothGattDescriptor.isConfigDescriptor() =
 
 // ByteArray
 
+@Suppress("ImplicitDefaultLocale")
 fun ByteArray.toHexString(): String =
     joinToString(separator = " ", prefix = "0x") { String.format("%02X", it) }
 

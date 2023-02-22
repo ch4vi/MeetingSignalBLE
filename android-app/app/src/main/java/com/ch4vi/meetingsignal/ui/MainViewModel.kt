@@ -85,22 +85,6 @@ sealed class MainViewState(
     object BluetoothError : MainViewState(null)
 }
 
-enum class ConnectionProgress {
-    DISCONNECTED,
-    SCANNING,
-    DEVICE_FOUND,
-    CONNECTING,
-    CONNECTED,
-    ;
-}
-
-fun ConnectionProgress.getProgress(): Int {
-    if (this == DISCONNECTED) return 100
-
-    val totalSteps = ConnectionProgress.values().size - 1 // DISCONNECTED is not a step
-    return this.ordinal.times(100).div(totalSteps)
-}
-
 @HiltViewModel
 class MainViewModel @Inject constructor() : ViewModel() {
 

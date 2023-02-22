@@ -84,15 +84,6 @@ class PlaygroundActivity : AppCompatActivity() {
         WritableWithoutResponse,
         Notifiable,
         Indicatable;
-
-        val action
-            get() = when (this) {
-                Readable -> "Read"
-                Writable -> "Write"
-                WritableWithoutResponse -> "Write Without Response"
-                Notifiable -> "Toggle Notifications"
-                Indicatable -> "Toggle Indications"
-            }
     }
 
     private var notifyingCharacteristics = mutableListOf<UUID>()
@@ -106,6 +97,7 @@ class PlaygroundActivity : AppCompatActivity() {
 
             onDisconnect = {
                 log("Disconnected from ${it.address}")
+                onDisconnected(device)
             }
 
             onCharacteristicRead = { _, characteristic, value ->
@@ -165,16 +157,16 @@ class PlaygroundActivity : AppCompatActivity() {
                 }
             }
             connectButton.setOnClickListener {
-                startScanning("A4:CF:12:72:A0:32")
+                startScanning()
             }
         }
     }
 
-    private fun startScanning(filterAddress: String) {
+    private fun startScanning() {
         bindingView?.apply {
             connectionStatus.text = "Scanning"
         }
-        scanner.run(filterAddress)
+        scanner.run("A4:CF:12:72:A0:32")
     }
 
     private fun onDeviceFound() {
@@ -230,10 +222,9 @@ class PlaygroundActivity : AppCompatActivity() {
 
     private fun log(message: String) {
         bindingView?.apply {
-            val formattedMessage = String.format("%s", message)
             val currentLogText = logMessages.text.ifEmpty { "Beginning of log." }
             runOnUiThread {
-                logMessages.text = "$currentLogText\n$formattedMessage"
+                logMessages.text = "$currentLogText\n$message"
                 logScroll.post { logScroll.fullScroll(View.FOCUS_DOWN) }
             }
         }

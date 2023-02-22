@@ -57,6 +57,7 @@ sealed class BleOperation(open val device: BluetoothDevice) {
     ) : BleOperation(device)
 
     companion object {
+        @Suppress("LongParameterList")
         fun autoCloseOperation(
             operation: BleOperation,
             onConnect: Connect.() -> End,

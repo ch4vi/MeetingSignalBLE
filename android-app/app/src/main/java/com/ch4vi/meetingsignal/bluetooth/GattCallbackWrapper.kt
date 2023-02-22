@@ -13,7 +13,7 @@ import android.bluetooth.BluetoothProfile
  * deprecated code when minSDK >= TIRAMISU
  */
 
-@Suppress("OVERRIDE_DEPRECATION")
+@Suppress("OVERRIDE_DEPRECATION", "TooManyFunctions")
 open class GattCallbackWrapper : BluetoothGattCallback() {
     sealed class ConnectionState(val status: Int) {
         class Connected(status: Int) : ConnectionState(status)

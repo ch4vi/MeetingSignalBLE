@@ -175,14 +175,14 @@ object ConnectionManager {
     @Synchronized
     private fun enqueueOperation(operation: BleOperation) {
         operationQueue.add(operation)
-        if (pendingOperation == null) doNextOperation()
+        if (pendingOperation == null) getNextOperation()
     }
 
     @Synchronized
     private fun signalEndOfOperation(): Boolean {
         Timber.d("End of $pendingOperation")
         pendingOperation = null
-        if (operationQueue.isNotEmpty()) doNextOperation()
+        if (operationQueue.isNotEmpty()) getNextOperation()
         return true
     }
 
@@ -191,7 +191,7 @@ object ConnectionManager {
      * can be enqueued by [enqueueOperation].
      */
     @Synchronized
-    private fun doNextOperation() {
+    private fun getNextOperation() {
         if (pendingOperation != null) {
             Timber.e("doNextOperation() called when an operation is pending! Aborting.")
             return
@@ -209,20 +209,23 @@ object ConnectionManager {
                 Timber.w("Connecting to ${device.address}")
                 device.connectGatt(context, false, callback)
             }
-            return
-        }
-
-        // Check BluetoothGatt availability for other operations
-        val gatt = deviceGattMap[operation.device]
-            ?: this@ConnectionManager.run {
+        } else {
+            // Check BluetoothGatt availability for other operations
+            deviceGattMap[operation.device]?.let { gatt ->
+                doNext(operation, gatt)
+            } ?: this@ConnectionManager.run {
                 Timber.e("Not connected to ${operation.device.address}! Aborting $operation operation.")
                 signalEndOfOperation()
-                return
             }
+        }
+    }
 
-        /* Skipped End() callbacks are managed in BluetoothGattCallback, these operations are not
-         * finished until BluetoothGattCallback is called
-         */
+    /** Skipped End() callbacks are managed in BluetoothGattCallback, these operations are not
+     * finished until BluetoothGattCallback is called
+     */
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    @Synchronized
+    private fun doNext(operation: BleOperation, gatt: BluetoothGatt) {
         BleOperation.autoCloseOperation(
             operation,
             onConnect = {
@@ -489,33 +492,34 @@ object ConnectionManager {
             value: ByteArray,
             status: GattStatus
         ) {
-            with(descriptor) {
-                when (status) {
-                    GattStatus.SUCCESS -> {
-                        Timber.i("Wrote to descriptor $uuid | value: ${value.toHexString()}")
+            when (status) {
+                GattStatus.SUCCESS -> {
+                    Timber.i("Wrote to descriptor ${descriptor.uuid} | value: ${value.toHexString()}")
 
-                        if (isConfigDescriptor()) {
-                            onClientConfigCharacteristicWrite(gatt, value, characteristic)
-                        } else {
-                            listeners.forEach {
-                                it.get()?.onDescriptorWrite?.invoke(gatt.device, this, value)
-                            }
+                    if (descriptor.isConfigDescriptor()) {
+                        onClientConfigCharacteristicWrite(gatt, value, descriptor.characteristic)
+                    } else {
+                        listeners.forEach {
+                            it.get()?.onDescriptorWrite?.invoke(gatt.device, descriptor, value)
                         }
                     }
-                    GattStatus.WRITE_NOT_PERMITTED ->
-                        Timber.e("Write not permitted for $uuid!")
-                    else ->
-                        Timber.e("Descriptor write failed for $uuid, error: $status")
                 }
+                GattStatus.WRITE_NOT_PERMITTED ->
+                    Timber.e("Write not permitted for ${descriptor.uuid}!")
+                else ->
+                    Timber.e("Descriptor write failed for ${descriptor.uuid}, error: $status")
             }
 
             val isNotifiable = pendingOperation is BleOperation.EnableNotifications ||
                 pendingOperation is BleOperation.DisableNotifications
 
-            if ((descriptor.isConfigDescriptor() && isNotifiable) ||
-                (!descriptor.isConfigDescriptor() && pendingOperation is BleOperation.DescriptorWrite)
-            ) {
-                signalEndOfOperation()
+            when {
+                descriptor.isConfigDescriptor() && isNotifiable ->
+                    signalEndOfOperation()
+
+                !descriptor.isConfigDescriptor() &&
+                    pendingOperation is BleOperation.DescriptorWrite ->
+                    signalEndOfOperation()
             }
         }
 
