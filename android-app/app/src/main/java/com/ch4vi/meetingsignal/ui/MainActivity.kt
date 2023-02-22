@@ -91,6 +91,10 @@ class MainActivity : AppCompatActivity() {
             content.send.setOnClickListener {
                 viewModel.dispatch(MainEvent.SendMessage("message"))
                 sendMessage("hola")
+                playground.setOnClickListener {
+                    val intent = Intent(this@MainActivity, PlaygroundActivity::class.java)
+                    startActivity(intent)
+                }
             }
         }
     }
