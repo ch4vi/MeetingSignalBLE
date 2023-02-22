@@ -49,7 +49,9 @@
         </activity>
         <activity android:name=".ui.PlaygroundActivity" />
 
-        <service android:name=".bluetooth.BluetoothLEService" android:enabled="true"/>
+        <service
+            android:name=".bluetooth.BleService"
+            android:enabled="true" />
     </application>
 
 </manifest>

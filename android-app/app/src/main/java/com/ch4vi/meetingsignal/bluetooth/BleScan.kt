@@ -5,7 +5,9 @@ import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
@@ -17,13 +19,13 @@ import com.ch4vi.meetingsignal.entities.Failure
 import timber.log.Timber
 
 @SuppressLint("MissingPermission")
-class BluetoothLEScan(private val activity: ComponentActivity) {
+class BleScan(private val activity: ComponentActivity) {
 
     companion object {
         private const val SCAN_PERIOD: Long = 20000 // 20 seconds
     }
 
-    var listener: BluetoothLEScanListener? = null
+    var listener: BleScanListener? = null
 
     private val bluetoothPermission = BluetoothPermission(activity)
     private val bluetoothManager by lazy {
@@ -32,7 +34,15 @@ class BluetoothLEScan(private val activity: ComponentActivity) {
     private val bluetoothAdapter: BluetoothAdapter?
         get() = bluetoothManager?.adapter
 
+    private val scanSettings = ScanSettings.Builder()
+        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+        .build()
+
     private var scanning = false
+        set(value) {
+            field = value
+            listener?.onStateChanged(value)
+        }
     private val handler = Handler(Looper.getMainLooper())
     private val deviceMapper = BluetoothDeviceMapper
 
@@ -70,20 +80,25 @@ class BluetoothLEScan(private val activity: ComponentActivity) {
         }
     }
 
-    private fun scanLeDevice() {
+    private fun scanLeDevice(filterAddress: String?) {
+        val filters = filterAddress?.let {
+            val filter = ScanFilter.Builder().setDeviceAddress(filterAddress).build()
+            listOf(filter)
+        }
+
         val bluetoothLeScanner = bluetoothManager?.adapter?.bluetoothLeScanner
         if (!scanning) { // Stops scanning after a pre-defined scan period.
             handler.postDelayed(::stop, SCAN_PERIOD)
             scanning = true
-            bluetoothLeScanner?.startScan(scanCallback)
+            bluetoothLeScanner?.startScan(filters, scanSettings, scanCallback)
         } else stop()
     }
 
-    fun run() {
+    fun run(filterAddress: String? = null) {
         bluetoothPermission.onResult = { granted ->
             if (granted) {
                 when (bluetoothAdapter?.isEnabled) {
-                    true -> scanLeDevice()
+                    true -> scanLeDevice(filterAddress)
                     false -> enable()
                     null -> listener?.onScanFailure(Failure.NotSupportedFailure())
                 }
@@ -93,9 +108,11 @@ class BluetoothLEScan(private val activity: ComponentActivity) {
     }
 
     fun stop() {
-        bluetoothManager?.adapter?.bluetoothLeScanner?.let {
-            scanning = false
-            it.stopScan(scanCallback)
+        if (scanning) {
+            bluetoothManager?.adapter?.bluetoothLeScanner?.let {
+                scanning = false
+                it.stopScan(scanCallback)
+            }
         }
     }
 }

@@ -1,10 +1,9 @@
 package com.ch4vi.meetingsignal.bluetooth
 
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.le.ScanRecord
 import com.ch4vi.meetingsignal.entities.BluetoothDeviceDomainModel
 
-interface BluetoothLEScanListener {
+interface BleScanListener {
     fun onScanFailure(error: Throwable)
     fun onScanResult(device: BluetoothDeviceDomainModel)
+    fun onStateChanged(isScanning: Boolean)
 }

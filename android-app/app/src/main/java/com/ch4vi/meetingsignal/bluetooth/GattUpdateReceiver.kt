@@ -5,19 +5,23 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService.Action.GATT_CONNECTED
-import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService.Action.GATT_DATA_AVAILABLE
-import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService.Action.GATT_DISCONNECTED
-import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService.Action.GATT_SERVICES_DISCOVERED
+import com.ch4vi.meetingsignal.bluetooth.BleService.Action.BATTERY_LEVEL_UPDATED
+import com.ch4vi.meetingsignal.bluetooth.BleService.Action.BATTERY_NOTIFY_DISABLED
+import com.ch4vi.meetingsignal.bluetooth.BleService.Action.BATTERY_NOTIFY_ENABLED
+import com.ch4vi.meetingsignal.bluetooth.BleService.Action.GATT_CONNECTED
+import com.ch4vi.meetingsignal.bluetooth.BleService.Action.GATT_DISCONNECTED
+import com.ch4vi.meetingsignal.bluetooth.BleService.Action.MEETING_STATUS_READ
+import com.ch4vi.meetingsignal.bluetooth.BleService.Action.MEETING_STATUS_WRITE
 import com.ch4vi.meetingsignal.utils.Event
 import com.ch4vi.meetingsignal.utils.toEvent
-import timber.log.Timber
 
 sealed class GattUpdateReceiverState {
     object Connected : GattUpdateReceiverState()
     object Disconnect : GattUpdateReceiverState()
-    object ServicesDiscovered : GattUpdateReceiverState()
-    class DataReceived(val message: String?) : GattUpdateReceiverState()
+    class BatteryLevelUpdate(val level: ByteArray?) : GattUpdateReceiverState()
+    class BatteryNotificationStatus(val enabled: Boolean) : GattUpdateReceiverState()
+    object MeetingStatusWritten : GattUpdateReceiverState()
+    class MeetingStatusUpdate(val status: ByteArray?) : GattUpdateReceiverState()
 }
 
 class GattUpdateReceiver : BroadcastReceiver() {
@@ -38,20 +42,28 @@ class GattUpdateReceiver : BroadcastReceiver() {
             GATT_DISCONNECTED.action -> {
                 changeState(GattUpdateReceiverState.Disconnect)
             }
-            GATT_SERVICES_DISCOVERED.action -> {
-                changeState(GattUpdateReceiverState.ServicesDiscovered)
+            BATTERY_LEVEL_UPDATED.action -> {
+                intent.getByteArrayExtra(BATTERY_LEVEL_UPDATED.action)?.let {
+                    changeState(GattUpdateReceiverState.BatteryLevelUpdate(it))
+                } ?: run {
+                    changeState(GattUpdateReceiverState.BatteryLevelUpdate(null))
+                }
             }
-            GATT_DATA_AVAILABLE.action -> {
-                val data = intent.getByteArrayExtra(BluetoothLEService.CHARACTERISTIC_VALUE)
-                if (data != null && data.isNotEmpty()) {
-                    Timber.d("Got string : " + String(data))
-                    val message = StringBuilder(data.size).apply {
-                        data.forEach { byteChar ->
-                            append(Char(byteChar.toUShort()))
-                        }
-                    }.toString()
-                    changeState(GattUpdateReceiverState.DataReceived(message))
-                } else changeState(GattUpdateReceiverState.DataReceived(null))
+            BATTERY_NOTIFY_ENABLED.action -> {
+                changeState(GattUpdateReceiverState.BatteryNotificationStatus(enabled = true))
+            }
+            BATTERY_NOTIFY_DISABLED.action -> {
+                changeState(GattUpdateReceiverState.BatteryNotificationStatus(enabled = false))
+            }
+            MEETING_STATUS_READ.action -> {
+                intent.getByteArrayExtra(MEETING_STATUS_READ.action)?.let {
+                    changeState(GattUpdateReceiverState.MeetingStatusUpdate(it))
+                } ?: run {
+                    changeState(GattUpdateReceiverState.MeetingStatusUpdate(null))
+                }
+            }
+            MEETING_STATUS_WRITE.action -> {
+                changeState(GattUpdateReceiverState.MeetingStatusWritten)
             }
 
         }
