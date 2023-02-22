@@ -108,7 +108,6 @@ class MainActivity : AppCompatActivity() {
                     viewModel.dispatch(MainEvent.MeetingOff)
                 }
             }
-
         }
     }
 
@@ -167,7 +166,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun startScanning(progress: Int, filterAddress: String) {
         bindingView?.content?.apply {

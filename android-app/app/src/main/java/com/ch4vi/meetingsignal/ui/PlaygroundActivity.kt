@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.ch4vi.meetingsignal.bluetooth.BleScan
+import com.ch4vi.meetingsignal.bluetooth.BleScanListener
 import com.ch4vi.meetingsignal.bluetooth.ConnectionEventListener
 import com.ch4vi.meetingsignal.bluetooth.ConnectionManager
 import com.ch4vi.meetingsignal.bluetooth.Constants.BATTERY_CHARACTERISTIC_UUID
@@ -14,8 +16,6 @@ import com.ch4vi.meetingsignal.bluetooth.isReadable
 import com.ch4vi.meetingsignal.bluetooth.isWritable
 import com.ch4vi.meetingsignal.bluetooth.isWritableWithoutResponse
 import com.ch4vi.meetingsignal.bluetooth.toUuid
-import com.ch4vi.meetingsignal.bluetooth.BleScan
-import com.ch4vi.meetingsignal.bluetooth.BleScanListener
 import com.ch4vi.meetingsignal.databinding.ActivityPlaygroundBinding
 import com.ch4vi.meetingsignal.entities.BluetoothDeviceDomainModel
 import com.google.android.material.snackbar.Snackbar
@@ -41,7 +41,7 @@ class PlaygroundActivity : AppCompatActivity() {
             log("device found $device")
             this@PlaygroundActivity.device = device
             scanner.stop()
-            //onDeviceFound()
+            // onDeviceFound()
         }
 
         override fun onStateChanged(isScanning: Boolean) {
@@ -227,7 +227,6 @@ class PlaygroundActivity : AppCompatActivity() {
     private fun findCharacteristic(): BluetoothGattCharacteristic? {
         return characteristics.firstOrNull { it.uuid == BATTERY_CHARACTERISTIC_UUID.toUuid() }
     }
-
 
     private fun log(message: String) {
         bindingView?.apply {

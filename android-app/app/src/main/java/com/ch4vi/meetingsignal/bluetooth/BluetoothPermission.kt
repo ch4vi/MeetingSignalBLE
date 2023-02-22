@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 
-
 class BluetoothPermission(caller: ActivityResultCaller) {
     companion object {
         @RequiresApi(Build.VERSION_CODES.S)
@@ -43,7 +42,6 @@ class BluetoothPermission(caller: ActivityResultCaller) {
 
             return permissions.toTypedArray()
         }
-
     }
 
     var onResult: (isGranted: Boolean) -> Unit = {}

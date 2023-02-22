@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import java.util.UUID
 
-
 /** Sealed class containing types of BLE operations */
 @SuppressLint("MissingPermission")
 sealed class BleOperation(open val device: BluetoothDevice) {
@@ -58,7 +57,7 @@ sealed class BleOperation(open val device: BluetoothDevice) {
     ) : BleOperation(device)
 
     companion object {
-        fun callback(
+        fun autoCloseOperation(
             operation: BleOperation,
             onConnect: Connect.() -> End,
             onDisconnect: Disconnect.() -> End,

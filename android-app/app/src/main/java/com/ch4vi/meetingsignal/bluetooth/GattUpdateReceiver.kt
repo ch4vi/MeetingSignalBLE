@@ -33,7 +33,6 @@ class GattUpdateReceiver : BroadcastReceiver() {
     private fun changeState(state: GattUpdateReceiverState) =
         mutableState.postValue(state.toEvent())
 
-
     override fun onReceive(context: Context?, intent: Intent?) {
         when (intent?.action) {
             GATT_CONNECTED.action -> {
@@ -65,7 +64,6 @@ class GattUpdateReceiver : BroadcastReceiver() {
             MEETING_STATUS_WRITE.action -> {
                 changeState(GattUpdateReceiverState.MeetingStatusWritten)
             }
-
         }
     }
 }

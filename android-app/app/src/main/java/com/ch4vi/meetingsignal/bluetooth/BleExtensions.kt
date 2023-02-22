@@ -136,7 +136,7 @@ fun BluetoothGattDescriptor.containsPermission(permission: Int): Boolean =
  */
 fun BluetoothGattDescriptor.isConfigDescriptor() =
     uuid.toString().uppercase(Locale.US) ==
-            CLIENT_CHARACTERISTIC_DESCRIPTOR_UUID.uppercase(Locale.US)
+        CLIENT_CHARACTERISTIC_DESCRIPTOR_UUID.uppercase(Locale.US)
 
 // endregion
 

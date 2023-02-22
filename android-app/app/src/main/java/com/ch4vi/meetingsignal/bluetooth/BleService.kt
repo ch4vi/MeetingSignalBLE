@@ -1,6 +1,5 @@
 package com.ch4vi.meetingsignal.bluetooth
 
-
 import android.annotation.SuppressLint
 import android.app.Service
 import android.bluetooth.BluetoothDevice
@@ -51,7 +50,7 @@ class BleService : Service() {
 
             onCharacteristicWrite = { _, characteristic, value ->
                 with(characteristic) {
-                    Timber.d("Wrote to ${uuid}, ${value.decodeToString()}")
+                    Timber.d("Wrote to $uuid, ${value.decodeToString()}")
                     when (uuid.lowercase()) {
                         MEETING_CHARACTERISTIC_UUID.lowercase() ->
                             sendBroadcast(Intent(MEETING_STATUS_WRITE.action))

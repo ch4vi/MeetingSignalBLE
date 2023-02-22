@@ -79,15 +79,14 @@ open class GattCallbackWrapper : BluetoothGattCallback() {
     ) {
     }
 
-
     override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
         when {
             status == BluetoothGatt.GATT_SUCCESS &&
-                    newState == BluetoothProfile.STATE_CONNECTED -> {
+                newState == BluetoothProfile.STATE_CONNECTED -> {
                 onConnectionStateChange(gatt, ConnectionState.Connected(status))
             }
             status == BluetoothGatt.GATT_SUCCESS &&
-                    newState == BluetoothProfile.STATE_DISCONNECTED -> {
+                newState == BluetoothProfile.STATE_DISCONNECTED -> {
                 onConnectionStateChange(gatt, ConnectionState.Disconnected(status))
             }
             else -> {
@@ -124,13 +123,11 @@ open class GattCallbackWrapper : BluetoothGattCallback() {
         status: Int
     ) = onCharacteristicRead(gatt, characteristic, value, status.toGattStatus())
 
-
     override fun onCharacteristicWrite(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         status: Int
     ) = onCharacteristicWrite(gatt, characteristic, characteristic.value, status.toGattStatus())
-
 
     override fun onCharacteristicChanged(
         gatt: BluetoothGatt?,
@@ -173,5 +170,4 @@ open class GattCallbackWrapper : BluetoothGattCallback() {
         descriptor: BluetoothGattDescriptor,
         status: Int
     ) = onDescriptorWrite(gatt, descriptor, descriptor.value, status.toGattStatus())
-
 }

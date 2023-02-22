@@ -6,12 +6,11 @@ import dagger.hilt.android.components.ActivityRetainedComponent
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-class AppModule {
-}
+class AppModule
 
-//@Module
-//@InstallIn(ActivityRetainedComponent::class)
-//object GithubRepoModule {
+// @Module
+// @InstallIn(ActivityRetainedComponent::class)
+// object GithubRepoModule {
 //
 //    @Provides
 //    @ActivityRetainedScoped
@@ -44,4 +43,4 @@ class AppModule {
 //    fun provideGetGithubRepo(repository: GithubReposRepository): GetGithubRepo {
 //        return GetGithubRepo(repository)
 //    }
-//}
+// }

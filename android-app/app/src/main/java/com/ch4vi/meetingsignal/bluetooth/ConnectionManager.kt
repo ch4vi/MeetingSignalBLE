@@ -220,11 +220,10 @@ object ConnectionManager {
                 return
             }
 
-
         /* Skipped End() callbacks are managed in BluetoothGattCallback, these operations are not
          * finished until BluetoothGattCallback is called
          */
-        BleOperation.callback(
+        BleOperation.autoCloseOperation(
             operation,
             onConnect = {
                 /* At this point we are requiring a BluetoothGatt object to be connected
@@ -435,7 +434,6 @@ object ConnectionManager {
 
                     else ->
                         Timber.e("Characteristic write failed for $uuid, error: $status")
-
                 }
             }
 
@@ -512,7 +510,7 @@ object ConnectionManager {
             }
 
             val isNotifiable = pendingOperation is BleOperation.EnableNotifications ||
-                    pendingOperation is BleOperation.DisableNotifications
+                pendingOperation is BleOperation.DisableNotifications
 
             if ((descriptor.isConfigDescriptor() && isNotifiable) ||
                 (!descriptor.isConfigDescriptor() && pendingOperation is BleOperation.DescriptorWrite)
@@ -529,7 +527,7 @@ object ConnectionManager {
             val charUuid = characteristic.uuid
             val notificationsEnabled =
                 value.contentEquals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) ||
-                        value.contentEquals(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)
+                    value.contentEquals(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)
             val notificationsDisabled =
                 value.contentEquals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)
 
@@ -561,7 +559,7 @@ object ConnectionManager {
                         getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, -1)
                     val bondState = getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1)
                     val bondTransition = "${previousBondState.toBondStateDescription()} to " +
-                            bondState.toBondStateDescription()
+                        bondState.toBondStateDescription()
                     Timber.w("${device?.address} bond state changed | $bondTransition")
                 }
             }

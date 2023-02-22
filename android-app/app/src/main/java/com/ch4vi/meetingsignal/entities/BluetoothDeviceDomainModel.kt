@@ -22,7 +22,7 @@ object BluetoothDeviceMapper : Mapper<BluetoothDevice?, BluetoothDeviceDomainMod
     override fun map(dto: BluetoothDevice?): BluetoothDeviceDomainModel? {
         dto ?: return null
         return dto.address?.let { address ->
-            BluetoothDeviceDomainModel(address, dto.name,dto)
+            BluetoothDeviceDomainModel(address, dto.name, dto)
         }
     }
 }
