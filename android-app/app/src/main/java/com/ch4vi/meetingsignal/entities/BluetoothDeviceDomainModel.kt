@@ -5,12 +5,12 @@ import android.bluetooth.BluetoothDevice
 import android.os.Parcelable
 import com.ch4vi.meetingsignal.utils.Mapper
 import kotlinx.parcelize.Parcelize
-import timber.log.Timber
 
 @Parcelize
 data class BluetoothDeviceDomainModel(
     val address: String,
-    val name: String?
+    val name: String?,
+    val value: BluetoothDevice
 ) : Parcelable {
     override fun toString(): String {
         return "n: ${name ?: "unknown"} adr: $address"
@@ -20,10 +20,9 @@ data class BluetoothDeviceDomainModel(
 @SuppressLint("MissingPermission")
 object BluetoothDeviceMapper : Mapper<BluetoothDevice?, BluetoothDeviceDomainModel?> {
     override fun map(dto: BluetoothDevice?): BluetoothDeviceDomainModel? {
-        return dto?.address?.let { address ->
-            val uuid = dto.uuids
-            Timber.d(uuid?.joinToString(", "))
-            BluetoothDeviceDomainModel(address, dto.name)
+        dto ?: return null
+        return dto.address?.let { address ->
+            BluetoothDeviceDomainModel(address, dto.name,dto)
         }
     }
 }
