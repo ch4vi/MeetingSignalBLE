@@ -4,171 +4,183 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.ch4vi.meetingsignal.bluetooth.GattUpdateReceiverState
+import com.ch4vi.meetingsignal.bluetooth.Constants.MEETING_OFF
+import com.ch4vi.meetingsignal.bluetooth.Constants.MEETING_ON
 import com.ch4vi.meetingsignal.entities.BluetoothDeviceDomainModel
 import com.ch4vi.meetingsignal.entities.Failure
+import com.ch4vi.meetingsignal.ui.ConnectionProgress.CONNECTED
+import com.ch4vi.meetingsignal.ui.ConnectionProgress.CONNECTING
+import com.ch4vi.meetingsignal.ui.ConnectionProgress.DEVICE_FOUND
+import com.ch4vi.meetingsignal.ui.ConnectionProgress.DISCONNECTED
+import com.ch4vi.meetingsignal.ui.ConnectionProgress.SCANNING
 import com.ch4vi.meetingsignal.utils.Event
 import com.ch4vi.meetingsignal.utils.toEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
-private const val TARGET_ADDRESS = "A4:CF:12:72:A0:32"
+private const val MEETING_SIGNAL_ADDRESS = "A4:CF:12:72:A0:32"
 
 sealed class MainEvent {
     object StartScan : MainEvent()
-    class OnChangeSignalState(val toState: SignalState) : MainEvent()
-    class OnDeviceResult(val device: BluetoothDeviceDomainModel) : MainEvent()
-    class OnConnectionStateChanged(val currentState: GattUpdateReceiverState) : MainEvent()
-    class SendMessage(val message: String) : MainEvent()
-    class OnError(val error: Throwable) : MainEvent()
+    class DeviceFound(val device: BluetoothDeviceDomainModel) : MainEvent()
+    object AttemptConnection : MainEvent()
+    object DeviceConnected : MainEvent()
+    object DeviceDisconnected : MainEvent()
+    class BatteryLevelUpdated(val data: ByteArray?) : MainEvent()
+    class OnFailure(val error: Throwable) : MainEvent()
+    object MeetingOn : MainEvent()
+    object MeetingOff : MainEvent()
+    class MeetingStatusUpdated(val data: ByteArray?) : MainEvent()
+    object MeetingStatusWritten : MainEvent()
 }
 
-sealed class MainViewState {
-    class OnStartScanning(val progress: Int) : MainViewState()
-
-    class DeviceFound(val progress: Int) : MainViewState()
-
-    class AttemptConnection(
+sealed class MainViewState(
+    open val device: BluetoothDeviceDomainModel?
+) {
+    class OnStartScanning(
         val progress: Int,
-        val device: BluetoothDeviceDomainModel
-    ) : MainViewState()
+        val deviceAddress: String
+    ) : MainViewState(null)
 
-    object ServiceDiscovered : MainViewState()
-    object Disconnected : MainViewState()
-    class ConnectionSuccessful(
+    class OnDeviceFound(
         val progress: Int,
-        val name: String?
-    ) : MainViewState()
+        device: BluetoothDeviceDomainModel,
+    ) : MainViewState(device)
 
-    object GenericError : MainViewState()
-    object ConnectionError : MainViewState()
+    class OnConnecting(
+        val progress: Int,
+        override val device: BluetoothDeviceDomainModel
+    ) : MainViewState(device)
+
+    class OnConnected(
+        val progress: Int,
+        override val device: BluetoothDeviceDomainModel
+    ) : MainViewState(device)
+
+    class OnDisconnected(
+        val progress: Int,
+        device: BluetoothDeviceDomainModel?
+    ) : MainViewState(device)
+
+    class OnBatteryUpdated(
+        val level: Int,
+        device: BluetoothDeviceDomainModel?
+    ) : MainViewState(device)
+
+    class WriteMeetingStatus(
+        val data: ByteArray,
+        override val device: BluetoothDeviceDomainModel
+    ) : MainViewState(device)
+
+    class ReadMeetingStatus(
+        override val device: BluetoothDeviceDomainModel
+    ) : MainViewState(device)
+
+    class OnMeetingStatusUpdated(
+        val status: Boolean,
+        device: BluetoothDeviceDomainModel?
+    ) : MainViewState(device)
+
+    object GenericError : MainViewState(null)
+    object BluetoothError : MainViewState(null)
 }
 
-enum class SignalState {
-    COLD, WARM, ALL, OFF
-}
-
-sealed class ConnectionProgress(private val step: Int) {
-    object SCANNING : ConnectionProgress(1)
-    object DEVICE_FOUND : ConnectionProgress(2)
-    object CONNECTING : ConnectionProgress(3)
-    object CONNECTED : ConnectionProgress(4)
-
-    object FAILED : ConnectionProgress(0)
-    object DISCONNECTED : ConnectionProgress(0)
+enum class ConnectionProgress {
+    DISCONNECTED,
+    SCANNING,
+    DEVICE_FOUND,
+    CONNECTING,
+    CONNECTED,
     ;
+}
 
-    private val totalSteps = 4
-    fun getProgress() = this.step.times(100).div(totalSteps)
+fun ConnectionProgress.getProgress(): Int {
+    if (this == DISCONNECTED) return 100
+
+    val totalSteps = ConnectionProgress.values().size - 1 // DISCONNECTED is not a step
+    return this.ordinal.times(100).div(totalSteps)
 }
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
-    //private val getGithubRepo: GetGithubRepo,
-) : ViewModel() {
+class MainViewModel @Inject constructor() : ViewModel() {
 
     private val mutableViewState = MutableLiveData<Event<MainViewState>>()
     val viewState: LiveData<Event<MainViewState>>
         get() = mutableViewState
 
-    private var device: BluetoothDeviceDomainModel? = null
-    private var gattState: ConnectionProgress = ConnectionProgress.DISCONNECTED
+    private val device: BluetoothDeviceDomainModel?
+        get() = mutableViewState.value?.forceGet()?.device
+
+    private var meetingStatus = false
 
     fun dispatch(event: MainEvent) {
         when (event) {
-            is MainEvent.OnChangeSignalState -> changeSignalState(event.toState)
-            is MainEvent.OnDeviceResult -> deviceResult(event.device)
-            is MainEvent.OnConnectionStateChanged -> onConnectionStateChanged(event.currentState)
-            is MainEvent.OnError -> onError(event.error)
-            is MainEvent.SendMessage -> Unit //TODO()
-            MainEvent.StartScan ->
-                changeViewState(MainViewState.OnStartScanning(ConnectionProgress.SCANNING.getProgress()))
+            MainEvent.StartScan -> startScan()
+            is MainEvent.DeviceFound -> deviceFound(event.device)
+            MainEvent.AttemptConnection -> connect()
+            MainEvent.DeviceConnected -> connected()
+            MainEvent.DeviceDisconnected -> disconnected()
+            is MainEvent.BatteryLevelUpdated -> batteryLevelUpdated(event.data)
+            is MainEvent.OnFailure -> onError(event.error)
+            MainEvent.MeetingOff -> toggleMeetingStatus(false)
+            MainEvent.MeetingOn -> toggleMeetingStatus(true)
+            is MainEvent.MeetingStatusUpdated -> meetingStatusUpdated(event.data)
+            MainEvent.MeetingStatusWritten -> onMeetingStatusWritten()
         }
     }
 
-    private fun deviceResult(device: BluetoothDeviceDomainModel) {
-        changeViewState(MainViewState.DeviceFound(ConnectionProgress.DEVICE_FOUND.getProgress()))
-        if (device.address == TARGET_ADDRESS &&
-            gattState != ConnectionProgress.CONNECTING &&
-            gattState != ConnectionProgress.CONNECTED
-        ) {
-            gattState = ConnectionProgress.CONNECTING
-            this.device = device
-            mutableViewState.value =
-                (MainViewState.AttemptConnection(
-                    ConnectionProgress.CONNECTING.getProgress(),
-                    device
-                ).toEvent()
-            )
-        }
+    private fun startScan() {
+        changeViewState(
+            MainViewState.OnStartScanning(SCANNING.getProgress(), MEETING_SIGNAL_ADDRESS)
+        )
     }
 
-    private fun onConnectionStateChanged(state: GattUpdateReceiverState) {
-        when (state) {
-            GattUpdateReceiverState.Connected -> {
-                gattState = ConnectionProgress.CONNECTED
-                changeViewState(
-                    MainViewState.ConnectionSuccessful(
-                        ConnectionProgress.CONNECTED.getProgress(),
-                        device?.name
-                    )
-                )
-            }
-            GattUpdateReceiverState.Disconnect -> {
-                gattState = ConnectionProgress.DISCONNECTED
-                changeViewState(MainViewState.Disconnected)
-            }
-            GattUpdateReceiverState.ServicesDiscovered -> {
-                Timber.d("ServicesDiscovered")
-                changeViewState(MainViewState.ServiceDiscovered)
-            }
-            is GattUpdateReceiverState.DataReceived -> {
-                Timber.d("DataReceived ${state.message}")
-            }
-        }
+    private fun deviceFound(device: BluetoothDeviceDomainModel) {
+        changeViewState(MainViewState.OnDeviceFound(DEVICE_FOUND.getProgress(), device))
     }
 
-    private fun changeSignalState(toState: SignalState) {
-//        when (toState) {
-//            SignalState.COLD -> {
-//                // do things
-//                changeViewState(MainViewState.ChangeState(SignalState.COLD))
-//            }
-//            SignalState.WARM -> {
-//                // do things
-//                changeViewState(MainViewState.ChangeState(SignalState.WARM))
-//            }
-//            SignalState.ALL -> {
-//                // do things
-//                changeViewState(MainViewState.ChangeState(SignalState.ALL))
-//            }
-//            SignalState.OFF -> {
-//                // do things
-//                changeViewState(MainViewState.ChangeState(SignalState.OFF))
-//            }
-//        }
+    private fun connect() {
+        device?.let { device ->
+            changeViewState(MainViewState.OnConnecting(CONNECTING.getProgress(), device))
+        } ?: run { onError(Failure.ScanFailure("empty device")) }
     }
 
-    private fun getRepo(repoName: String, ownerName: String) {
-//        changeViewState(MainViewState.Loading)
-        viewModelScope.launch {
-//            val request = GetGithubRepoRequest(ownerName, repoName)
-//            getGithubRepo(request)
-//                .collect { resource ->
-//                    when (resource) {
-//                        is Resource.Error -> onError(resource.throwable)
-//                        is Resource.Loading ->
-//                            if (resource.data != null) {
-//                                changeViewState(RepoDetailViewState.ShowRepo(resource.data))
-//                            }
-//                        is Resource.Success ->
-//                            changeViewState(RepoDetailViewState.ShowRepo(resource.data))
-//                    }
-//                }
-        }
+    private fun connected() {
+        device?.let { device ->
+            changeViewState(MainViewState.OnConnected(CONNECTED.getProgress(), device))
+        } ?: run { onError(Failure.ConnectionFailure("empty device")) }
+    }
+
+    private fun disconnected() {
+        device?.let { device ->
+            changeViewState(MainViewState.OnDisconnected(DISCONNECTED.getProgress(), device))
+        } ?: run { onError(Failure.ConnectionFailure("empty device")) }
+    }
+
+    private fun batteryLevelUpdated(data: ByteArray?) {
+        val level = data?.decodeToString()?.trim()?.toFloatOrNull()?.toInt() ?: 0
+        changeViewState(MainViewState.OnBatteryUpdated(level, device))
+    }
+
+    private fun toggleMeetingStatus(newStatus: Boolean) {
+        device?.let { device ->
+            if (newStatus != meetingStatus) {
+                val data = if (newStatus) MEETING_ON.toByteArray() else MEETING_OFF.toByteArray()
+                changeViewState(MainViewState.WriteMeetingStatus(data, device))
+                meetingStatus = newStatus // TODO not sure if here or wait to answer
+            }
+        } ?: run { onError(Failure.ConnectionFailure("empty device")) }
+    }
+
+    private fun onMeetingStatusWritten() {
+        device?.let { device ->
+            changeViewState(MainViewState.ReadMeetingStatus(device))
+        } ?: run { onError(Failure.ConnectionFailure("empty device")) }
+    }
+
+    private fun meetingStatusUpdated(data: ByteArray?) {
+        val status = data?.decodeToString()?.trim()?.equals(MEETING_ON) ?: false
+        changeViewState(MainViewState.OnMeetingStatusUpdated(status, device))
     }
 
     private fun changeViewState(viewState: MainViewState) =
@@ -177,7 +189,8 @@ class MainViewModel @Inject constructor(
     @VisibleForTesting
     internal fun onError(error: Throwable) {
         when (error) {
-            is Failure.ConnectionFailure -> changeViewState(MainViewState.ConnectionError)
+            is Failure.ConnectionFailure,
+            is Failure.ScanFailure -> changeViewState(MainViewState.BluetoothError)
             else -> changeViewState(MainViewState.GenericError)
         }
     }

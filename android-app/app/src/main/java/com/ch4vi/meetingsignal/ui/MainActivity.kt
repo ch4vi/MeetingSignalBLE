@@ -6,20 +6,21 @@ import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.ch4vi.meetingsignal.bluetooth.BluetoothLEScan
-import com.ch4vi.meetingsignal.bluetooth.BluetoothLEScanListener
-import com.ch4vi.meetingsignal.bluetooth.BluetoothLEService
+import com.ch4vi.meetingsignal.bluetooth.BleScan
+import com.ch4vi.meetingsignal.bluetooth.BleScanListener
+import com.ch4vi.meetingsignal.bluetooth.BleService
+import com.ch4vi.meetingsignal.bluetooth.BluetoothPermission
 import com.ch4vi.meetingsignal.bluetooth.GattUpdateReceiver
 import com.ch4vi.meetingsignal.bluetooth.GattUpdateReceiverState
 import com.ch4vi.meetingsignal.databinding.ActivityMainBinding
 import com.ch4vi.meetingsignal.entities.BluetoothDeviceDomainModel
+import com.ch4vi.meetingsignal.entities.Failure
 import com.ch4vi.meetingsignal.utils.EventObserver
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
-
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -27,24 +28,31 @@ class MainActivity : AppCompatActivity() {
     private var bindingView: ActivityMainBinding? = null
     private val viewModel by viewModels<MainViewModel>()
 
-    private val scanner = BluetoothLEScan(this)
-    private val scannerListener = object : BluetoothLEScanListener {
+    private val scanner = BleScan(this)
+    private val scannerListener = object : BleScanListener {
         override fun onScanFailure(error: Throwable) {
-            viewModel.dispatch(MainEvent.OnError(error))
+            viewModel.dispatch(MainEvent.OnFailure(error))
         }
 
         override fun onScanResult(device: BluetoothDeviceDomainModel) {
-            viewModel.dispatch(MainEvent.OnDeviceResult(device))
+            viewModel.dispatch(MainEvent.DeviceFound(device))
+        }
+
+        override fun onStateChanged(isScanning: Boolean) {
+            bindingView?.content?.apply {
+                connectButton.text = if (isScanning) "Stop Scan" else "Start Scan"
+            }
         }
     }
 
-    private var bluetoothService: BluetoothLEService? = null
+    private var bluetoothService: BleService? = null
+    private val gattUpdateReceiver: GattUpdateReceiver by lazy { GattUpdateReceiver() }
     private val serviceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(componentName: ComponentName, service: IBinder) {
-            (service as? BluetoothLEService.LocalBinder)?.service?.let { BLEService ->
-                bluetoothService = BLEService
-                if (!BLEService.initialize()) {
-                    Timber.e("Unable to initialize Bluetooth")
+            (service as? BleService.LocalBinder)?.service?.let { bleService ->
+                bluetoothService = bleService
+                if (!BluetoothPermission.checkPermissions(this@MainActivity)) {
+                    viewModel.dispatch(MainEvent.OnFailure(Failure.PermissionFailure()))
                 }
             }
         }
@@ -53,9 +61,6 @@ class MainActivity : AppCompatActivity() {
             bluetoothService = null
         }
     }
-
-    private val gattUpdateReceiver: GattUpdateReceiver by lazy { GattUpdateReceiver() }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,7 +71,8 @@ class MainActivity : AppCompatActivity() {
         scanner.listener = scannerListener
 
         setContentView(view)
-        initObservers()
+        viewModel.viewState.observe(this, EventObserver { onViewStateChanged(it) })
+        gattUpdateReceiver.state.observe(this, EventObserver { onReceiverStateChanged(it) })
         initUI()
         initService()
     }
@@ -84,49 +90,91 @@ class MainActivity : AppCompatActivity() {
     private fun initUI() {
         bindingView?.apply {
             setSupportActionBar(toolbar)
-            content.connectionProgress.progress = 1
-            content.connectButton.setOnClickListener {
-                viewModel.dispatch(MainEvent.StartScan)
-            }
-            content.send.setOnClickListener {
-                viewModel.dispatch(MainEvent.SendMessage("message"))
-                sendMessage("hola")
+            with(content) {
+                connectionProgress.progress = 1
                 playground.setOnClickListener {
                     val intent = Intent(this@MainActivity, PlaygroundActivity::class.java)
                     startActivity(intent)
                 }
+                connectButton.setOnClickListener {
+                    viewModel.dispatch(MainEvent.StartScan)
+                }
+                meetingOn.setOnClickListener {
+//                    meetingToggle.isEnabled = false
+                    viewModel.dispatch(MainEvent.MeetingOn)
+                }
+                meetingOff.setOnClickListener {
+//                    meetingToggle.isEnabled = false
+                    viewModel.dispatch(MainEvent.MeetingOff)
+                }
             }
+
         }
     }
 
-    private fun initObservers() {
-        viewModel.viewState.observe(this, EventObserver { onViewStateChanged(it) })
-        gattUpdateReceiver.state.observe(this, EventObserver { onReceiverStateChanged(it) })
+    private fun initService() {
+        if (bluetoothService == null) {
+            val gattServiceIntent = Intent(this, BleService::class.java)
+            bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE)
+        }
+    }
+
+    private fun initReceiver() {
+        val intentFilter = IntentFilter().apply {
+            addAction(BleService.Action.GATT_CONNECTED.action)
+            addAction(BleService.Action.GATT_DISCONNECTED.action)
+            addAction(BleService.Action.BATTERY_LEVEL_UPDATED.action)
+            addAction(BleService.Action.BATTERY_NOTIFY_ENABLED.action)
+            addAction(BleService.Action.BATTERY_NOTIFY_DISABLED.action)
+            addAction(BleService.Action.MEETING_STATUS_READ.action)
+            addAction(BleService.Action.MEETING_STATUS_WRITE.action)
+        }
+        registerReceiver(gattUpdateReceiver, intentFilter)
     }
 
     private fun onViewStateChanged(state: MainViewState) {
         when (state) {
-            MainViewState.GenericError -> showError("TODO")
-            MainViewState.ConnectionError -> showError("TODO")
-            is MainViewState.OnStartScanning -> startScanning(state.progress)
-            is MainViewState.DeviceFound -> onDeviceFound(state.progress)
-            is MainViewState.AttemptConnection -> tryingConnection(state.progress, state.device)
-            is MainViewState.ConnectionSuccessful -> connected(state.progress, state.name)
-            MainViewState.Disconnected -> onDisconnected()
-            MainViewState.ServiceDiscovered -> serviceDiscovered()
+            is MainViewState.OnStartScanning -> startScanning(state.progress, state.deviceAddress)
+            is MainViewState.OnDeviceFound -> onDeviceFound(state.progress)
+            is MainViewState.OnConnecting -> tryingConnection(state.progress, state.device)
+            is MainViewState.OnConnected -> onConnected(state.progress, state.device)
+            is MainViewState.OnDisconnected -> onDisconnected(state.progress, state.device)
+            MainViewState.BluetoothError -> showError()
+            MainViewState.GenericError -> showError()
+            is MainViewState.OnBatteryUpdated -> onBatteryUpdated(state.level)
+            is MainViewState.WriteMeetingStatus -> toggleMeeting(state.data, state.device)
+            is MainViewState.ReadMeetingStatus -> readMeetingStatus(state.device)
+            is MainViewState.OnMeetingStatusUpdated -> updateMeetingStatus(state.status)
         }
     }
 
     private fun onReceiverStateChanged(state: GattUpdateReceiverState) {
-        viewModel.dispatch(MainEvent.OnConnectionStateChanged(state))
+        when (state) {
+            GattUpdateReceiverState.Disconnect -> viewModel.dispatch(MainEvent.DeviceDisconnected)
+            GattUpdateReceiverState.Connected -> viewModel.dispatch(MainEvent.DeviceConnected)
+            is GattUpdateReceiverState.BatteryLevelUpdate ->
+                viewModel.dispatch(MainEvent.BatteryLevelUpdated(state.level))
+            GattUpdateReceiverState.MeetingStatusWritten ->
+                viewModel.dispatch(MainEvent.MeetingStatusWritten)
+            is GattUpdateReceiverState.MeetingStatusUpdate ->
+                viewModel.dispatch(MainEvent.MeetingStatusUpdated(state.status))
+            is GattUpdateReceiverState.BatteryNotificationStatus -> {
+                Toast.makeText(
+                    this,
+                    "notifications ${if (state.enabled) "enabled" else "disabled"}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
-    private fun startScanning(progress: Int) {
+
+    private fun startScanning(progress: Int, filterAddress: String) {
         bindingView?.content?.apply {
             connectionProgress.progress = progress
             connectionStatus.text = "Scanning"
         }
-        scanner.run()
+        scanner.run(filterAddress)
     }
 
     private fun onDeviceFound(progress: Int) {
@@ -135,6 +183,7 @@ class MainActivity : AppCompatActivity() {
             connectionStatus.text = "Device found"
         }
         scanner.stop()
+        viewModel.dispatch(MainEvent.AttemptConnection)
     }
 
     private fun tryingConnection(progress: Int, device: BluetoothDeviceDomainModel) {
@@ -142,55 +191,54 @@ class MainActivity : AppCompatActivity() {
             connectionProgress.progress = progress
             connectionStatus.text = "Trying to connect to ${device.name ?: "Unknown"}"
         }
-        bluetoothService?.connect(device.address)
+        bluetoothService?.connect(device.value)
     }
 
-    private fun serviceDiscovered() {
-        bluetoothService?.getSupportedGattServices()
-    }
-
-    private fun onDisconnected() {
-        bindingView?.content?.apply {
-            connectionProgress.progress = 1
-            connectionStatus.text = "Disconnected"
-        }
-    }
-
-    private fun connected(progress: Int, name: String?) {
+    private fun onDisconnected(progress: Int, device: BluetoothDeviceDomainModel?) {
         bindingView?.content?.apply {
             connectionProgress.progress = progress
-            connectionStatus.text = "Connected to ${name ?: "unknown2"}"
-            send.isEnabled = true
+            connectionStatus.text = "Disconnected from ${device?.name ?: "unknown"}"
         }
     }
 
-    private fun initService() {
-        if (bluetoothService == null) {
-            val gattServiceIntent = Intent(this, BluetoothLEService::class.java)
-            bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE)
+    private fun onConnected(progress: Int, device: BluetoothDeviceDomainModel) {
+        bindingView?.content?.apply {
+            connectionProgress.progress = progress
+            connectionStatus.text = "Connected to ${device.name ?: "unknown"}"
+            meetingToggle.isEnabled = true
+        }
+        bluetoothService?.subscribeToBatteryLevel(device.value)
+        readMeetingStatus(device)
+    }
+
+    private fun readMeetingStatus(device: BluetoothDeviceDomainModel) {
+        bluetoothService?.readMeetingStatus(device.value)
+    }
+
+    private fun onBatteryUpdated(level: Int) {
+        bindingView?.content?.apply {
+            batteryProgress.progress = level
+            batteryLevel.text = "$level %"
         }
     }
 
-    private fun initReceiver() {
-        val intentFilter = IntentFilter().apply {
-            addAction(BluetoothLEService.Action.GATT_CONNECTED.action)
-            addAction(BluetoothLEService.Action.GATT_DISCONNECTED.action)
-            addAction(BluetoothLEService.Action.GATT_SERVICES_DISCOVERED.action)
-            addAction(BluetoothLEService.Action.GATT_DATA_AVAILABLE.action)
+    private fun toggleMeeting(inMeeting: ByteArray, device: BluetoothDeviceDomainModel) {
+        bluetoothService?.writeMeetingStatus(device.value, inMeeting)
+    }
+
+    private fun updateMeetingStatus(status: Boolean) {
+        bindingView?.content?.apply {
+            meetingToggle.isEnabled = true
+            meetingOn.isChecked = status
+            meetingOff.isChecked = !status
         }
-        registerReceiver(gattUpdateReceiver, intentFilter)
     }
 
-    fun sendMessage(message: String) {
-        val data = message.toByteArray()
-        bluetoothService?.writeCharacteristic(data)
-    }
-
-    private fun showError(message: String?) {
+    private fun showError() {
         bindingView?.apply {
             Snackbar.make(
                 this.root,
-                "failure ${message ?: "empty"}",
+                "failure", // TODO
                 Snackbar.LENGTH_SHORT
             ).show()
         }
