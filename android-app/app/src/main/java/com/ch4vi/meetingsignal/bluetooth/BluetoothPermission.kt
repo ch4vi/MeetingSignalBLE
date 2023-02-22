@@ -20,7 +20,6 @@ class BluetoothPermission(caller: ActivityResultCaller) {
 
         private const val coarseLocation = Manifest.permission.ACCESS_COARSE_LOCATION
         private const val fineLocation = Manifest.permission.ACCESS_FINE_LOCATION
-        private const val bkgLocation = Manifest.permission.ACCESS_BACKGROUND_LOCATION
 
         fun checkPermissions(context: Context): Boolean =
             notGrantedPermissions(context).isEmpty()
@@ -41,9 +40,6 @@ class BluetoothPermission(caller: ActivityResultCaller) {
 
             val fineCheck = ContextCompat.checkSelfPermission(context, fineLocation)
             if (fineCheck != PackageManager.PERMISSION_GRANTED) permissions.add(fineLocation)
-
-            val bkgCheck = ContextCompat.checkSelfPermission(context, bkgLocation)
-            if (bkgCheck != PackageManager.PERMISSION_GRANTED) permissions.add(bkgLocation)
 
             return permissions.toTypedArray()
         }
