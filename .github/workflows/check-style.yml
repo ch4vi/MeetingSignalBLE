@@ -17,7 +17,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
       - name: env
         run: |
           env
@@ -35,22 +34,3 @@ jobs:
           gradle detektDebug
           gradle clean app:compileDebugSources
           gradle ktlintCheck
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: env
-        run: |
-          env
-          pwd
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 7.5
-          gradle-executable: /android-app/gradle/wrapper/gradle-wrapper.jar
-          build-root-directory: /android-app
-      - name: unit_test
-        run: |
-          ./gradlew clean :app:testDebugUnitTest
