@@ -14,3 +14,6 @@ Battery
 https://iotprojectsideas.com/esp8266-monitor-its-own-battery-level-using-iot/
 https://gist.github.com/sam016/4abe921b5a9ee27f67b3686910293026
 https://randomnerdtutorials.com/esp32-ble-server-client/#ESP32-BLE-Server
+
+ESP32:
+testing https://docs.platformio.org/en/stable/tutorials/espressif32/arduino_debugging_unit_testing.html#writing-unit-tests
