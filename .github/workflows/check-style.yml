@@ -29,6 +29,7 @@ jobs:
           build-root-directory: /android-app
       - name: linter
         run: |
+          cd android-app
           gradle lintDebug
           ./gradlew detektDebug
           ./gradlew clean app:compileDebugSources
