@@ -1,4 +1,4 @@
-name: CI
+name: Check style
 
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -22,6 +22,11 @@ jobs:
         run: |
           env
           pwd
+      - name: Setup Gradle
+          uses: gradle/gradle-build-action@v2
+          with:
+            gradle-executable: /android-app/gradle/wrapper/gradle-wrapper.jar
+            build-root-directory: /android-app/build
       - name: linter
         run: |
           ./gradlew lintDebug
