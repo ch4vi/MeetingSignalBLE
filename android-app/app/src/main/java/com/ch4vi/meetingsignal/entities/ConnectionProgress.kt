@@ -1,4 +1,4 @@
-package com.ch4vi.meetingsignal.ui
+package com.ch4vi.meetingsignal.entities
 
 private const val PER_CENT = 100
 
