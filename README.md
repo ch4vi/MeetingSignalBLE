@@ -2,6 +2,7 @@
 Android app to control "On Air" style banner
 
 [![CI](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/github.yml/badge.svg)](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/github.yml)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N4N7IZ6OW)
 
 Reference links:
 Bluetooth
