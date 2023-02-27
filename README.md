@@ -1,5 +1,5 @@
 # Meeting Signal Bluethooh Low Energy
----
+
 
 [![CI](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/github.yml/badge.svg)](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/github.yml)
 
@@ -21,13 +21,15 @@ After that I grabbed an ESP32 that I already had and a led strip from a USB lamp
 - M3 nuts
 - Some wires
 - 5V led strip [Aliexpress](https://www.aliexpress.com/item/1005004377378405.html?spm=a2g0o.productlist.main.33.112c6912Wcitqn&algo_pvid=08f9bfd9-a1b8-4f98-a177-aa90fe518e4d&algo_exp_id=08f9bfd9-a1b8-4f98-a177-aa90fe518e4d-16&pdp_ext_f=%7B%22sku_id%22%3A%2212000028965478917%22%7D&pdp_npi=3%40dis%21EUR%214.53%213.35%21%21%21%21%21%402100b84516774992198541301d071b%2112000028965478917%21sea%21ES%21704501893&curPageLogUid=1pvAT3grLcQT)
+- 2x 100K resistors [Aliexpress](https://www.aliexpress.com/item/1005003117726705.html?spm=a2g0o.productlist.main.1.4e8b3843eGESSF&algo_pvid=07d86e6d-c8eb-4df2-abc6-c50a2aabcb9d&algo_exp_id=07d86e6d-c8eb-4df2-abc6-c50a2aabcb9d-0&pdp_ext_f=%7B%22sku_id%22%3A%2212000024192658375%22%7D&pdp_npi=3%40dis%21EUR%212.86%212.77%21%21%21%21%21%402100bbf516775020184434105d070f%2112000024192658375%21sea%21ES%21704501893&curPageLogUid=kWlcKLQUfU1Y)
 
-/* Links for reference, they are not affiliated links
-/** I already had the ESP board but if I had to buy a new one I would chose the USB-C version, but for the TP4056 I had the micro-USB version, and the 3D model is adapted to this version, maybe I make the USB-C version.
+
+\* *Links for reference, they are not affiliated links*<br />
+** *I already had the ESP board but if I had to buy a new one I would chose the USB-C version, but for the TP4056 I had the micro-USB version, and the 3D model is adapted to this version, maybe I make the USB-C version.*
 
 ## Instructions
 
-**Put circuit here**
+<img src="https://github.com/ch4vi/MeetingSignalBLE/blob/feature/xml/resources/circuit_v1.png" width="700">
 
 ### ESP32
 
@@ -38,9 +40,6 @@ There are some ESP32 boards that integrate battery level measurement, on my case
 
 It needs a better clean up, but the app ask for permissions, tuns on the bluetooth and looks for a MAC address to connect. You have to change this parameter to connect to your device. You can get this addres from the bluetooth screen on your device. Maybe I will implement a new screen to choose a device from a list (or maybe not ;D ). I have set the minumum SDK to 30 because my device is on this target, if you can, and you have some knowdelege on Android development, you can upgrade this and remove some code because currently the Blouetooth API is between 2 versions and there are some deprecations that I have to keep to be able to work with my device. 
 If youy have interest on learn about the Android Bluetooth API I recommend to check this [post](https://punchthrough.com/android-ble-guide/) and their [project](https://github.com/PunchThrough/ble-starter-android) it was super helpful to me.
- 
-
-
 
 # Reference links:
 
@@ -53,3 +52,21 @@ If youy have interest on learn about the Android Bluetooth API I recommend to ch
 * https://iotprojectsideas.com/esp8266-monitor-its-own-battery-level-using-iot/
 * https://randomnerdtutorials.com/esp32-ble-server-client/#ESP32-BLE-Server
 * https://docs.platformio.org/en/stable/tutorials/espressif32/arduino_debugging_unit_testing.html#writing-unit-tests
+
+# LICENSE
+
+    Meeting Signal BLE
+    Copyright (C) 2023  Xavi Anyo
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, version 3 of the License, or any later 
+    version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
