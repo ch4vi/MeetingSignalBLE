@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/spacing_m"
             android:layout_marginTop="@dimen/spacing_m"
-            android:text="Connect"
+            android:text="@string/app_main_connect"
             app:layout_constraintEnd_toStartOf="@id/disconnectButton"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/spacing_m"
             android:layout_marginTop="@dimen/spacing_m"
-            android:text="Disconnect"
+            android:text="@string/app_main_disconnect"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/connectButton"
             app:layout_constraintTop_toTopOf="parent" />
@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/spacing_m"
             android:layout_marginTop="@dimen/spacing_m"
-            android:text="Log"
+            android:text="@string/app_playground_log"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/divider" />
 

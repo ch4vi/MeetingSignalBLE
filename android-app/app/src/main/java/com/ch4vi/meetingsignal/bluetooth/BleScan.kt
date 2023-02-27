@@ -46,7 +46,7 @@ class BleScan(private val activity: ComponentActivity) {
     private val handler = Handler(Looper.getMainLooper())
     private val deviceMapper = BluetoothDeviceMapper
 
-    private var resultLauncher =
+    private val resultLauncher =
         activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 run()
@@ -88,7 +88,7 @@ class BleScan(private val activity: ComponentActivity) {
 
         val bluetoothLeScanner = bluetoothManager?.adapter?.bluetoothLeScanner
         if (!scanning) { // Stops scanning after a pre-defined scan period.
-            handler.postDelayed(::stop, SCAN_PERIOD)
+            handler.postDelayed({ stop() }, SCAN_PERIOD)
             scanning = true
             bluetoothLeScanner?.startScan(filters, scanSettings, scanCallback)
         } else stop()

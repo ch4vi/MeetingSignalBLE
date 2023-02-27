@@ -9,6 +9,7 @@ import android.os.IBinder
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import com.ch4vi.meetingsignal.R
 import com.ch4vi.meetingsignal.bluetooth.BleScan
 import com.ch4vi.meetingsignal.bluetooth.BleScanListener
 import com.ch4vi.meetingsignal.bluetooth.BleService
@@ -39,9 +40,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onStateChanged(isScanning: Boolean) {
-            bindingView?.content?.apply {
-                connectButton.text = if (isScanning) "Stop Scan" else "Start Scan"
-            }
+            bindingView?.content?.connectButton?.text =
+                if (isScanning) "Stop Scan" else "Start Scan"
         }
     }
 
@@ -100,11 +100,11 @@ class MainActivity : AppCompatActivity() {
                     viewModel.dispatch(MainEvent.StartScan)
                 }
                 meetingOn.setOnClickListener {
-//                    meetingToggle.isEnabled = false
+                    meetingToggle.isEnabled = false
                     viewModel.dispatch(MainEvent.MeetingOn)
                 }
                 meetingOff.setOnClickListener {
-//                    meetingToggle.isEnabled = false
+                    meetingToggle.isEnabled = false
                     viewModel.dispatch(MainEvent.MeetingOff)
                 }
             }
@@ -170,7 +170,7 @@ class MainActivity : AppCompatActivity() {
     private fun startScanning(progress: Int, filterAddress: String) {
         bindingView?.content?.apply {
             connectionProgress.progress = progress
-            connectionStatus.text = "Scanning"
+            connectionStatus.text = getString(R.string.app_main_scanning)
         }
         scanner.run(filterAddress)
     }
@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity() {
     private fun onDeviceFound(progress: Int) {
         bindingView?.content?.apply {
             connectionProgress.progress = progress
-            connectionStatus.text = "Device found"
+            connectionStatus.text = getString(R.string.app_main_device_found)
         }
         scanner.stop()
         viewModel.dispatch(MainEvent.AttemptConnection)
@@ -187,7 +187,8 @@ class MainActivity : AppCompatActivity() {
     private fun tryingConnection(progress: Int, device: BluetoothDeviceDomainModel) {
         bindingView?.content?.apply {
             connectionProgress.progress = progress
-            connectionStatus.text = "Trying to connect to ${device.name ?: "Unknown"}"
+            val deviceName = device.name ?: getString(R.string.app_generic_unknown)
+            connectionStatus.text = getString(R.string.app_main_trying_connection, deviceName)
         }
         bluetoothService?.connect(device.value)
     }
@@ -195,14 +196,16 @@ class MainActivity : AppCompatActivity() {
     private fun onDisconnected(progress: Int, device: BluetoothDeviceDomainModel?) {
         bindingView?.content?.apply {
             connectionProgress.progress = progress
-            connectionStatus.text = "Disconnected from ${device?.name ?: "unknown"}"
+            val deviceName = device?.name ?: getString(R.string.app_generic_unknown)
+            connectionStatus.text = getString(R.string.app_main_disconnected, deviceName)
         }
     }
 
     private fun onConnected(progress: Int, device: BluetoothDeviceDomainModel) {
         bindingView?.content?.apply {
             connectionProgress.progress = progress
-            connectionStatus.text = "Connected to ${device.name ?: "unknown"}"
+            val deviceName = device.name ?: getString(R.string.app_generic_unknown)
+            connectionStatus.text = getString(R.string.app_main_connected, deviceName)
             meetingToggle.isEnabled = true
         }
         bluetoothService?.subscribeToBatteryLevel(device.value)
@@ -216,7 +219,7 @@ class MainActivity : AppCompatActivity() {
     private fun onBatteryUpdated(level: Int) {
         bindingView?.content?.apply {
             batteryProgress.progress = level
-            batteryLevel.text = "$level %"
+            batteryLevel.text = getString(R.string.app_main_battery_level, level)
         }
     }
 
@@ -233,12 +236,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showError() {
-        bindingView?.apply {
-            Snackbar.make(
-                this.root,
-                "failure", // TODO
-                Snackbar.LENGTH_SHORT
-            ).show()
+        bindingView?.root?.let { root ->
+            Snackbar.make(root, R.string.app_generic_error, Snackbar.LENGTH_SHORT).show()
         }
     }
 }

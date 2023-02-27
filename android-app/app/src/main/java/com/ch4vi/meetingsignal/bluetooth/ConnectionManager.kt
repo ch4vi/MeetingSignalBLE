@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 @SuppressLint("MissingPermission")
 object ConnectionManager {
 
-    private var listeners: MutableSet<WeakReference<ConnectionEventListener>> = mutableSetOf()
+    private val listeners: MutableSet<WeakReference<ConnectionEventListener>> = mutableSetOf()
 
     private val deviceGattMap = ConcurrentHashMap<BluetoothDevice, BluetoothGatt>()
     private val operationQueue = ConcurrentLinkedQueue<BleOperation>()
@@ -45,7 +45,7 @@ object ConnectionManager {
             return
         }
         listeners.add(WeakReference(listener))
-        listeners = listeners.filter { it.get() != null }.toMutableSet()
+        listeners.removeIf { it.get() == null }
         Timber.d("Added listener $listener, ${listeners.size} listeners total")
     }
 
@@ -529,9 +529,10 @@ object ConnectionManager {
             characteristic: BluetoothGattCharacteristic
         ) {
             val charUuid = characteristic.uuid
-            val notificationsEnabled =
-                value.contentEquals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) ||
-                    value.contentEquals(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)
+            val isNotifiable =
+                value.contentEquals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            val isIndicatable = value.contentEquals(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)
+            val notificationsEnabled = isNotifiable || isIndicatable
             val notificationsDisabled =
                 value.contentEquals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)
 
@@ -562,8 +563,9 @@ object ConnectionManager {
                     val previousBondState =
                         getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, -1)
                     val bondState = getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1)
-                    val bondTransition = "${previousBondState.toBondStateDescription()} to " +
-                        bondState.toBondStateDescription()
+                    val bondTransition =
+                        "${previousBondState.toBondStateDescription()} to ${bondState.toBondStateDescription()}"
+
                     Timber.w("${device?.address} bond state changed | $bondTransition")
                 }
             }

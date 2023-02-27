@@ -67,7 +67,6 @@ dependencies {
 
     implementation libs.bundles.common
     implementation libs.bundles.ui
-    implementation 'androidx.core:core-ktx:+'
 
     kapt libs.room.kapt
     kapt libs.hilt.kapt

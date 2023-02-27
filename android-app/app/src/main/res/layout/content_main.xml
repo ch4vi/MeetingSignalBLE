@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/spacing_m"
         android:layout_marginTop="@dimen/spacing_m"
-        android:text="Connect"
+        android:text="@string/app_main_connect"
         app:layout_constraintEnd_toStartOf="@id/playground"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -113,14 +113,14 @@
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Meeting ON" />
+            android:text="@string/app_main_meeting_on" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/meetingOff"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Meeting OFF" />
+            android:text="@string/app_main_meeting_off" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
 

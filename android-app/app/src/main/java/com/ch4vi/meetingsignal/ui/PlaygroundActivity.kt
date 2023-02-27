@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.ch4vi.meetingsignal.R
 import com.ch4vi.meetingsignal.bluetooth.BleScan
 import com.ch4vi.meetingsignal.bluetooth.BleScanListener
 import com.ch4vi.meetingsignal.bluetooth.ConnectionEventListener
@@ -23,7 +24,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import java.util.UUID
 
-@SuppressLint("SetTextI18n")
 @AndroidEntryPoint
 class PlaygroundActivity : AppCompatActivity() {
 
@@ -52,7 +52,9 @@ class PlaygroundActivity : AppCompatActivity() {
                 onDeviceFound()
             }
             bindingView?.apply {
-                connectButton.text = if (isScanning) "Stop Scan" else "Start Scan"
+                val start = getString(R.string.app_playground_scan_start)
+                val stop = getString(R.string.app_playground_scan_stop)
+                connectButton.text = if (isScanning) start else stop
             }
         }
     }
@@ -60,9 +62,9 @@ class PlaygroundActivity : AppCompatActivity() {
     private val characteristics by lazy {
         device?.let {
             ConnectionManager.servicesOnDevice(it.value)?.flatMap { service ->
-                service.characteristics ?: listOf()
-            } ?: listOf()
-        } ?: listOf()
+                service.characteristics.orEmpty()
+            }.orEmpty()
+        }.orEmpty()
     }
     private val characteristicProperties by lazy {
         characteristics.associateWith { characteristic ->
@@ -86,13 +88,12 @@ class PlaygroundActivity : AppCompatActivity() {
         Indicatable;
     }
 
-    private var notifyingCharacteristics = mutableListOf<UUID>()
+    private val notifyingCharacteristics = mutableListOf<UUID>()
+
     private val connectionEventListener by lazy {
         ConnectionEventListener().apply {
             onConnectionSetupComplete = {
-                device?.let {
-                    onConnected(it)
-                }
+                device?.let(::onConnected)
             }
 
             onDisconnect = {
@@ -152,9 +153,7 @@ class PlaygroundActivity : AppCompatActivity() {
         bindingView?.apply {
             setSupportActionBar(toolbar)
             disconnectButton.setOnClickListener {
-                device?.value?.let {
-                    ConnectionManager.teardownConnection(it)
-                }
+                device?.value?.let(ConnectionManager::teardownConnection)
             }
             connectButton.setOnClickListener {
                 startScanning()
@@ -163,36 +162,35 @@ class PlaygroundActivity : AppCompatActivity() {
     }
 
     private fun startScanning() {
-        bindingView?.apply {
-            connectionStatus.text = "Scanning"
-        }
+        bindingView?.connectionStatus?.text = getString(R.string.app_main_scanning)
         scanner.run("A4:CF:12:72:A0:32")
     }
 
     private fun onDeviceFound() {
-        bindingView?.apply {
-            connectionStatus.text = "Device found"
-        }
+        bindingView?.connectionStatus?.text = getString(R.string.app_main_device_found)
         scanner.stop()
         device?.let { tryingConnection(it) }
     }
 
     private fun tryingConnection(device: BluetoothDeviceDomainModel) {
         bindingView?.apply {
-            connectionStatus.text = "Trying to connect to ${device.name ?: "Unknown"}"
+            val deviceName = device.name ?: getString(R.string.app_generic_unknown)
+            connectionStatus.text = getString(R.string.app_main_trying_connection, deviceName)
         }
         ConnectionManager.connect(device.value, this)
     }
 
     private fun onDisconnected(device: BluetoothDeviceDomainModel?) {
         bindingView?.apply {
-            connectionStatus.text = "Disconnected from ${device?.name ?: "unknown"}"
+            val deviceName = device?.name ?: getString(R.string.app_generic_unknown)
+            connectionStatus.text = getString(R.string.app_main_disconnected, deviceName)
         }
     }
 
     private fun onConnected(device: BluetoothDeviceDomainModel) {
         bindingView?.apply {
-            connectionStatus.text = "Connected to ${device.name ?: "unknown"}"
+            val deviceName = device.name ?: getString(R.string.app_generic_unknown)
+            connectionStatus.text = getString(R.string.app_main_connected, deviceName)
         }
         findCharacteristic()?.let { characteristic ->
             toggleBatterySubscription(device, characteristic)
@@ -220,6 +218,7 @@ class PlaygroundActivity : AppCompatActivity() {
         return characteristics.firstOrNull { it.uuid == BATTERY_CHARACTERISTIC_UUID.toUuid() }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun log(message: String) {
         bindingView?.apply {
             val currentLogText = logMessages.text.ifEmpty { "Beginning of log." }
@@ -231,12 +230,9 @@ class PlaygroundActivity : AppCompatActivity() {
     }
 
     private fun showError(message: String?) {
-        bindingView?.apply {
-            Snackbar.make(
-                this.root,
-                "failure ${message ?: "empty"}",
-                Snackbar.LENGTH_SHORT
-            ).show()
+        bindingView?.root?.let { root ->
+            val errorMessage = message ?: getString(R.string.app_generic_error)
+            Snackbar.make(root, errorMessage, Snackbar.LENGTH_SHORT).show()
         }
     }
 }
