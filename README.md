@@ -1,7 +1,7 @@
 # Meeting Signal Bluethooh Low Energy
 
 ![Version](https://img.shields.io/badge/Version-0.1.0-green)
-[![CI](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/github.yml/badge.svg)](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/github.yml)
+[![Check style](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/check-style.yml/badge.svg)](https://github.com/ch4vi/MeetingSignalBLE/actions/workflows/check-style.yml)
 
 ## Why
 
