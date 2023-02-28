@@ -1,4 +1,4 @@
-name: CI
+name: Check style
 
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -17,27 +17,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
       - name: env
         run: |
           env
           pwd
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.5
+          gradle-executable: /android-app/gradle/wrapper/gradle-wrapper.jar
+          build-root-directory: /android-app
       - name: linter
         run: |
-          ./gradlew lintDebug
-          ./gradlew detektDebug
-          ./gradlew clean app:compileDebugSources
-          ./gradlew ktlintCheck
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: env
-        run: |
-          env
-          pwd
-      - name: unit_test
-        run: |
-          ./gradlew clean :app:testDebugUnitTest
+          cd android-app
+          gradle lintDebug
+          gradle detektDebug
+          gradle clean app:compileDebugSources
+          gradle ktlintCheck

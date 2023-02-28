@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">MeetingSignalAndroid</string>
+
+    <string name="app_generic_unknown">Unknown</string>
+    <string name="app_generic_error">Something went wrong</string>
+
+    <string name="app_main_disconnect">Disconnect</string>
+    <string name="app_main_connect">Connect</string>
+    <string name="app_main_scanning">Scanning</string>
+    <string name="app_main_device_found">Device found</string>
+    <string name="app_main_trying_connection">Trying to connect to %s</string>
+    <string name="app_main_disconnected">Disconnected from %s</string>
+    <string name="app_main_connected">Connected to %s</string>
+    <string name="app_main_meeting_on">Meeting ON</string>
+    <string name="app_main_meeting_off">Meeting OFF</string>
+    <string name="app_main_battery_level">%d%%</string>
+
+    <string name="app_playground_log">Log</string>
+    <string name="app_playground_scan_start">Start Scan</string>
+    <string name="app_playground_scan_stop">Stop Scan</string>
+
 </resources>

@@ -16,37 +16,27 @@ dependencyResolutionManagement {
         libs {
             version("hilt", "2.45")
             version("room", "2.5.0-beta01")
-            version("compose", "1.3.3")
 
             library("android-core", "androidx.core", "core-ktx").version("1.9.0")
             library("hilt", "com.google.dagger", "hilt-android").versionRef("hilt")
             library("timber", "com.jakewharton.timber", "timber").version("5.0.1")
             bundle("common", ["android-core", "hilt", "timber"])
 
-//            region Debug
-            library("ui-compose-tools", "androidx.compose.ui", "ui-tooling").versionRef("compose")
-            library("ui-compose-manifest", "androidx.compose.ui", "ui-test-manifest").versionRef("compose")
-            bundle("debug", [
-                    "ui-compose",
-                    "ui-compose-tools",
-            ])
-//            endregion
-
 //            region UI
             version("navigation", "2.5.3")
-            library("compose-ui", "androidx.compose.ui", "ui").versionRef("compose")
-            library("compose-ui-tools", "androidx.compose.ui", "ui-tooling-preview").versionRef("compose")
-            library("compose-material", "androidx.compose.material3", "material3").version("1.1.0-alpha06")
-            library("compose-activity", "androidx.activity", "activity-compose").version("1.6.1")
+            library("swipe-refresh", "androidx.swiperefreshlayout", "swiperefreshlayout").version("1.1.0")
+            library("appcompat", "androidx.appcompat", "appcompat").version("1.5.1")
+            library("constraint", "androidx.constraintlayout", "constraintlayout").version("2.1.4")
+            library("material", "com.google.android.material", "material").version("1.7.0-alpha02")
             library("nav-fragment", "androidx.navigation", "navigation-fragment-ktx").versionRef("navigation")
             library("nav-ui", "androidx.navigation", "navigation-ui-ktx").versionRef("navigation")
             bundle("ui", [
+                    "swipe-refresh",
+                    "appcompat",
+                    "constraint",
+                    "material",
                     "nav-fragment",
                     "nav-ui",
-                    "compose-ui",
-                    "compose-ui-tools",
-                    "compose-material",
-                    "compose-activity",
             ])
 //            endregion
 
@@ -74,20 +64,18 @@ dependencyResolutionManagement {
             library("coroutines-test", "org.jetbrains.kotlinx", "kotlinx-coroutines-test").version("1.6.4")
             bundle("test", [
                     "core-test",
-                    "coroutines-test",
                     "junit",
                     "mockk",
+                    "coroutines-test",
             ])
 
             library("ui-junit", "androidx.test.ext", "junit-ktx").version("1.1.5")
             library("ui-hilt", "com.google.dagger", "hilt-android-testing").versionRef("hilt")
             library("espresso", "androidx.test.espresso", "espresso-core").version("3.3.0")
-            library("ui-compose", "androidx.compose.ui", "ui-test-junit4").versionRef("compose")
             bundle("uitest", [
                     "ui-junit",
                     "ui-hilt",
                     "espresso",
-                    "ui-compose",
             ])
 //            endregion
         }
